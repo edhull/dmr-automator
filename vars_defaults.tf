@@ -12,6 +12,7 @@ variable lambda_loglevel {
 }
 
 variable jira_apikey {
+    sensitive   = true
     default     = ""
     description = "Authentication key for Jira. If the service is Jira Cloud then this will be an API key, otherwise a user password"
 }
