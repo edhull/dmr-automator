@@ -4,9 +4,20 @@ A Data Movement Request (DMR) is a request submitted, usually to a security team
 
 This Terraform utilises AWS Lambda and SQS to automate the retrieval of files from the internet by safely scanning them (with VirusTotal and ClamAV) and bringing them into AWS.
 
-The result of the DMR will be optionally sent to an SQS queue which will comment on a JIRA ticket with the result and location of the imported file.
+The result of the DMR will be optionally sent to a lambda which will comment on a JIRA ticket with the result and location of the imported file.
 
 ![dmr-flow](dmr-flow.png)
+
+1. User sends a request which ends up in an SQS queue
+2. SQS queue item triggers the dmr-initiator lambda to scan against VirusTotal
+3. File is submitted to VirusTotal
+4. File is scanned
+5. File is pulled down from the file provider if it is clean, otherwise a message is sent to notify the user that the file was suspicious/malicious
+6. File is stored in a Staging bucket
+7. Object Put event triggers the dmr-scanner lambda
+8. New ClamAV definitions are retrieved from a bucket containing new ClamAV definitions
+9. File is scanned by ClamAV. If it is clean it is sent to a delivery bucket, otherwise the user is notified via Jira that the DMR was not successful and the file is deleted.
+10. Presigned URL is generated and sent to the user via Jira by the dmr-scanner.
 
 ## Prerequisites
 
