@@ -26,6 +26,8 @@ resource "aws_lambda_function" "dmr_clamav_scanner" {
       AV_STATUS_SNS_PUBLISH_INFECTED    = false
       AV_STATUS_METADATA                = "dmr-av-status"
       AV_DELIVERY_BUCKET                = aws_s3_bucket.dmr_delivery_bucket.id
+      SEND_JIRA_COMMENT                 = var.create_jira
+      DMR_JIRA_ARN                      = var.create_jira ? aws_lambda_function.dmr_jira[0].arn : ""
     }
   }
 }
@@ -151,6 +153,37 @@ resource "aws_iam_role_policy_attachment" "dmr_clamav_scanner" {
   role                  = aws_iam_role.dmr_clamav_scanner.name
   policy_arn            = aws_iam_policy.iam_dmr_clamav_scanner.arn
 }
+
+resource "aws_iam_policy" "iam_dmr_clamav_scanner_invoke_jira" {
+  count           = var.create_jira ? 1 : 0
+  name            = "iam-${var.dmr_clamav_scanner}-invoke-dmr-jira"
+  path            = "/"
+  description     = ""
+
+  policy = <<EOF
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Sid":"InvokeDMRJira",
+         "Effect":"Allow",
+         "Action":[
+            "lambda:InvokeFunction",
+            "lambda:InvokeAsync"
+         ],
+         "Resource":"${aws_lambda_function.dmr_jira[0].arn}"
+      }
+   ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "dmr_clamav_scanner_invoke_jira" {
+  count                 = var.create_jira ? 1 : 0
+  role                  = aws_iam_role.dmr_clamav_scanner.name
+  policy_arn            = aws_iam_policy.iam_dmr_clamav_scanner_invoke_jira[0].arn
+}
+
 
 resource "aws_lambda_permission" "dmr_clamav_trigger_scan_event" {
     statement_id        = "AllowExecutionFromS3Bucket"

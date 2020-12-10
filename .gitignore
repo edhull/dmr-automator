@@ -1,7 +1,7 @@
 # Prebuild Files
 dmr-clamav
 dmr-initiator
-
+dmr-jira
 # Local .terraform directories
 **/.terraform/*
 .terraform

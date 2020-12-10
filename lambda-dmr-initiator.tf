@@ -17,22 +17,24 @@ resource "aws_lambda_function" "dmr_initiator" {
   handler           = "dmr_initiator.handler"
   runtime           = "python3.7"
   source_code_hash  = filebase64sha256("functions/dmr-initiator.zip")
-  timeout           = "600"
-  memory_size       = "512"
+  timeout           = "900"
+  memory_size       = "1024"
   environment {
     variables      = {
-      LOG_LEVEL = var.lambda_loglevel
-      VT_API_KEY = var.vt_api_key
-      S3_STAGING_BUCKET = aws_s3_bucket.dmr_staging_bucket.id
+      LOG_LEVEL           = var.lambda_loglevel
+      VT_API_KEY          = var.vt_api_key
+      S3_STAGING_BUCKET   = aws_s3_bucket.dmr_staging_bucket.id
+      SEND_JIRA_COMMENT   = var.create_jira
+      DMR_JIRA_ARN        = var.create_jira ? aws_lambda_function.dmr_jira[0].arn : ""
     }
   }
 }
 
-# data "archive_file" "dmr_initiator" {
-#     type            = "zip"
-#     source_dir      = "dmr-initiator"
-#     output_path     = "functions/dmr-initiator.zip"
-# }
+data "archive_file" "dmr_initiator" {
+    type            = "zip"
+    source_dir      = "dmr-initiator"
+    output_path     = "functions/dmr-initiator.zip"
+}
 
 resource "aws_lambda_event_source_mapping" "dmr_initiator" {
   batch_size       = 1
@@ -41,7 +43,8 @@ resource "aws_lambda_event_source_mapping" "dmr_initiator" {
   function_name    = aws_lambda_function.dmr_initiator.arn
   depends_on = [
     aws_lambda_function.dmr_initiator,
-    aws_iam_policy.iam_dmr_initiator
+    aws_iam_policy.iam_dmr_initiator,
+    aws_sqs_queue.dmr_queue
   ]
 }
 
@@ -118,4 +121,34 @@ EOF
 resource "aws_iam_role_policy_attachment" "dmr_initiator" {
   role              = aws_iam_role.dmr_initiator.name
   policy_arn        = aws_iam_policy.iam_dmr_initiator.arn
+}
+
+resource "aws_iam_policy" "iam_dmr_initiator_invoke_jira" {
+  count           = var.create_jira ? 1 : 0
+  name            = "iam-${var.dmr_initiator}-invoke-dmr-jira"
+  path            = "/"
+  description     = ""
+
+  policy = <<EOF
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Sid":"InvokeDMRJira",
+         "Effect":"Allow",
+         "Action":[
+            "lambda:InvokeFunction",
+            "lambda:InvokeAsync"
+         ],
+         "Resource":"${aws_lambda_function.dmr_jira[0].arn}"
+      }
+   ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "dmr_initiator_invoke_jira" {
+  count                 = var.create_jira ? 1 : 0
+  role                  = aws_iam_role.dmr_initiator.name
+  policy_arn            = aws_iam_policy.iam_dmr_initiator_invoke_jira[0].arn
 }
