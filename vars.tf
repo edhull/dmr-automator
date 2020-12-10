@@ -1,4 +1,4 @@
 variable vt_api_key {
-    sensitive = true
+    #sensitive = true
     description = "API Key for VirusTotal"
 }
