@@ -21,6 +21,12 @@ resource "aws_lambda_function" "dmr_jira" {
   source_code_hash  = filebase64sha256("functions/dmr-jira.zip")
   timeout           = "120"
   memory_size       = "256"
+
+  vpc_config {
+    subnet_ids          = []
+    security_group_ids  = []
+  }
+
   environment {
     variables      = {
       LOG_LEVEL     = var.lambda_loglevel
@@ -31,13 +37,6 @@ resource "aws_lambda_function" "dmr_jira" {
       PYTHONWARNINGS = "ignore:Unverified HTTPS request"
     }
   }
-}
-
-data "archive_file" "dmr_jira" {
-  count             = var.create_jira ? 1 : 0
-    type            = "zip"
-    source_dir      = "dmr-jira"
-    output_path     = "functions/dmr-jira.zip"
 }
 
 resource "aws_cloudwatch_log_group" "dmr_jira" {

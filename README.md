@@ -30,11 +30,11 @@ Optionally a Jira Server / ticket request for the file.
 ## Running
 
 ```
-./init.sh
 export TF_VAR_vt_api_key=<Virus Total API Key>
 export TF_VAR_jira_user=<Jira user>
 export TF_VAR_jira_apikey=<Jira password/API key>
 export TF_VAR_jira_server=<Jira Server URL>
+./init.sh
 terraform plan
 terraform apply
 ```
@@ -46,5 +46,9 @@ The dmr-initiator will trigger the file to be scanned on VirusTotal. If the file
 The object creation in the dmr-staging S3 bucket will trigger the dmr-clamav-scanner lambda to scan the object. If it is clean, it will be tagged and moved to the dmr-delivery bucket for a user to retrieve.
 
 Optionally, the dmr-clamav-scanner will then send a comment to Jira to notify a user that their DMR has been delivered.
+
+## Misc
+
+The ClamAV scanner builds upon the work of [Upside Travel|https://github.com/upsidetravel/bucket-antivirus-function]
 
 

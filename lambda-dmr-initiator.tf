@@ -30,12 +30,6 @@ resource "aws_lambda_function" "dmr_initiator" {
   }
 }
 
-data "archive_file" "dmr_initiator" {
-    type            = "zip"
-    source_dir      = "dmr-initiator"
-    output_path     = "functions/dmr-initiator.zip"
-}
-
 resource "aws_lambda_event_source_mapping" "dmr_initiator" {
   batch_size       = 1
   enabled          = true

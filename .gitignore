@@ -5,6 +5,7 @@ dmr-jira
 # Local .terraform directories
 **/.terraform/*
 .terraform
+donotcommit.tf
 
 # .tfstate files
 *.tfstate

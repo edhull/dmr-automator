@@ -32,12 +32,6 @@ resource "aws_lambda_function" "dmr_clamav_scanner" {
   }
 }
 
-data "archive_file" "dmr_clamav-scanner" {
-    type            = "zip"
-    source_dir      = "dmr-clamav"
-    output_path     = "functions/dmr-clamav.zip"
-}
-
 resource "aws_cloudwatch_log_group" "dmr_clamav_scanner" {
   name              = "/aws/lambda/${aws_lambda_function.dmr_clamav_scanner.function_name}"
   retention_in_days = "1"
