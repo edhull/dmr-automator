@@ -3,6 +3,24 @@ variable dmr_initiator {
   default = "dmr-initiator"
 }
 
+# Generate a placeholder VirusTotal API key to be updated manually
+resource "aws_ssm_parameter" "virustotal_apikey" {
+  name              = "/dmr/virustotal"
+  type              = "SecureString"
+  key_id            = CHANGEME
+  value             = "PLACEHOLDER_REPLACEBYHAND"
+  overwrite         = false
+  lifecycle {
+    ignore_changes = [value, key_id]
+  }
+}
+
+# Lookup value post creation
+data "aws_ssm_parameter" "virustotal_apikey" {
+  name              = "/dmr/virustotal"
+  depends_on        = [aws_ssm_parameter.virustotal_apikey]
+}
+
 resource "aws_lambda_alias" "dmr_initiator" {
   name              = var.dmr_initiator
   description       = "Handle DMR requests"
@@ -22,7 +40,7 @@ resource "aws_lambda_function" "dmr_initiator" {
   environment {
     variables      = {
       LOG_LEVEL           = var.lambda_loglevel
-      VT_API_KEY          = var.vt_api_key
+      VT_API_KEY          = data.aws_ssm_parameter.virustotal_apikey.value
       S3_STAGING_BUCKET   = aws_s3_bucket.dmr_staging_bucket.id
       SEND_JIRA_COMMENT   = var.create_jira
       DMR_JIRA_ARN        = var.create_jira ? aws_lambda_function.dmr_jira[0].arn : ""
