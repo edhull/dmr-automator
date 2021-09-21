@@ -29,8 +29,11 @@ Optionally a Jira Server / ticket request for the file.
 
 ## Running
 
+Set a VirusTotal API key in SSM under the `/dmr/virustotal` path 
+
+Replace the `CHANGEME` KMS key name in the `aws_ssm_parameter.virustotal_apikey` resource to one of your own creation.
+
 ```
-export TF_VAR_vt_api_key=<Virus Total API Key>
 export TF_VAR_jira_user=<Jira user>
 export TF_VAR_jira_apikey=<Jira password/API key>
 export TF_VAR_jira_server=<Jira Server URL>
